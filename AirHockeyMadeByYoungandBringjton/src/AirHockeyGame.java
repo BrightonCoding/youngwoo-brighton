@@ -17,6 +17,7 @@ public class AirHockeyGame extends Game {
     private static final int RINK_HEIGHT = 440;
     private static final int GOAL_HEIGHT = 150;
     private static final int MATCH_LENGTH_SECONDS = 90;
+    private static final int SCORE_LIMIT = 7;
 
     private Rink rink;
     private Paddle playerPaddle;
@@ -82,7 +83,7 @@ public class AirHockeyGame extends Game {
     /**
      * runs one frame of the game
      * pre:  setup() is done and all game objects exist
-     * post: movement, goals, and collisions are checked, or the game ends if time is up
+     * post: movement, goals, and collisions are checked, or the game ends if time/score is up
      */
     public void act() {
         updateScoreboard();
@@ -92,13 +93,16 @@ public class AirHockeyGame extends Game {
         }
 
         if (isTimeUp()) {
-            finishGame();
+            finishGame("Time's Up");
             return;
         }
 
         handleInput();
         puck.update();
         handleGoals();
+        if (gameOver) {
+            return;
+        }
         handleWallCollisions();
         handlePaddleCollisions();
     }
@@ -132,10 +136,10 @@ public class AirHockeyGame extends Game {
 
     /**
      * stops the match and shows who won
-     * pre:  time is up and the game has not ended already
+     * pre:  time is up or someone reached the score limit
      * post: the game loop stops and the final result pops up
      */
-    private void finishGame() {
+    private void finishGame(String reason) {
         gameOver = true;
         stopGame();
         updateScoreboard();
@@ -152,7 +156,7 @@ public class AirHockeyGame extends Game {
         JOptionPane.showMessageDialog(this,
                 result + "\nFinal Score: " + player1Name + " " + player1Score
                         + " - " + player2Score + " " + player2Name,
-                "Time's Up", JOptionPane.INFORMATION_MESSAGE);
+                reason, JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -234,6 +238,10 @@ public class AirHockeyGame extends Game {
         if (puck.getX() + puckDiameter < RINK_X) {
             player2Score++;
             updateScoreboard();
+            checkScoreLimit();
+            if (gameOver) {
+                return;
+            }
             puck.reset(RINK_X + RINK_WIDTH / 2, RINK_Y + RINK_HEIGHT / 2, -1);
         }
 
@@ -241,7 +249,22 @@ public class AirHockeyGame extends Game {
         if (puck.getX() > RINK_X + RINK_WIDTH) {
             player1Score++;
             updateScoreboard();
+            checkScoreLimit();
+            if (gameOver) {
+                return;
+            }
             puck.reset(RINK_X + RINK_WIDTH / 2, RINK_Y + RINK_HEIGHT / 2, 1);
+        }
+    }
+
+    /**
+     * checks if a player reached the score limit
+     * pre:  a goal was just scored
+     * post: the game ends if either player has 7 points
+     */
+    private void checkScoreLimit() {
+        if (player1Score >= SCORE_LIMIT || player2Score >= SCORE_LIMIT) {
+            finishGame("Score Limit Reached");
         }
     }
 
