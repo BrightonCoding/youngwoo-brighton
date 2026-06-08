@@ -5,7 +5,7 @@ import javax.swing.JOptionPane;
 import framework.Game;
 
 // Brighton Ng + Youngwoo Nam - ICS3U Culminating
-// main game class, all the actual game logic lives here
+// main game class, all the actual game logic is here
 public class AirHockeyGame extends Game {
 
     // rink dimensions - we figured these out by trial and error until it looked right
@@ -22,6 +22,8 @@ public class AirHockeyGame extends Game {
     private Paddle playerPaddle;
     private Paddle opponentPaddle;
     private Puck puck;
+
+    //initialize the scores for each player
     private int player1Score = 0;
     private int player2Score = 0;
     private boolean gameOver = false;
@@ -39,7 +41,7 @@ public class AirHockeyGame extends Game {
         setDelay(16);
         setMatchLengthSeconds(MATCH_LENGTH_SECONDS);
 
-        // show the controls before anything starts
+        // show the controls before anything starts (joptionpane)
         JOptionPane.showMessageDialog(this,
                 "Player 1 (Blue): W / A / S / D\nPlayer 2 (Red): Arrow Keys\n\nScore by hitting the puck into the other side's goal.",
                 "How to Play", JOptionPane.INFORMATION_MESSAGE);
@@ -47,12 +49,13 @@ public class AirHockeyGame extends Game {
         player1Name = promptForName("Enter Player 1's name:", "Player 1");
         player2Name = promptForName("Enter Player 2's name:", "Player 2");
 
-        // puck is added first so it ends up on top visually,
-        // paddles are next, rink goes last so it's behind everything
+        // puck is added first to the gamee so it ends up on top visually
+        // paddles are next rink is added last last
         puck = new Puck(
                 RINK_X + RINK_WIDTH / 2,
                 RINK_Y + RINK_HEIGHT / 2);
 
+        // create paddle dimensions for each player
         playerPaddle = new Paddle(
                 RINK_X + 80,
                 RINK_Y + RINK_HEIGHT / 2,
@@ -66,6 +69,8 @@ public class AirHockeyGame extends Game {
         rink = new Rink(WINDOW_WIDTH, WINDOW_HEIGHT,
                 RINK_X, RINK_Y, RINK_WIDTH, RINK_HEIGHT, GOAL_HEIGHT,
                 player1Name, player2Name);
+
+        // methods to add the objects to the rink
         updateScoreboard();
 
         add(puck);
@@ -79,6 +84,7 @@ public class AirHockeyGame extends Game {
     public void act() {
         updateScoreboard();
 
+        // check if the game is over or if the time's up
         if (gameOver) {
             return;
         }
