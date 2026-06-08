@@ -1,0 +1,69 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+import framework.GameObject;
+
+// one paddle for one player - moves around their half of the rink
+public class Paddle extends GameObject {
+
+    private static final int PADDLE_WIDTH = 16;
+    private static final int PADDLE_HEIGHT = 80;
+    private static final int SPEED = 5;
+
+    private Color paddleColor;
+
+    // pre:  centerX and centerY are valid positions on screen, color is not null
+    // post: paddle is created, sized, and placed so its center is at (centerX, centerY)
+    public Paddle(int centerX, int centerY, Color color) {
+        paddleColor = color;
+        setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+        setX(centerX - PADDLE_WIDTH / 2);
+        setY(centerY - PADDLE_HEIGHT / 2);
+    }
+
+    // pre:  minX, maxX, minY, maxY define the area the paddle is allowed to move in
+    // post: paddle moves in the direction of any held keys, and stays within the given bounds
+    public void move(boolean up, boolean down, boolean left, boolean right,
+            int minX, int maxX, int minY, int maxY) {
+
+        int centerX = getX() + PADDLE_WIDTH / 2;
+        int centerY = getY() + PADDLE_HEIGHT / 2;
+
+        if (up)    { centerY = centerY - SPEED; }
+        if (down)  { centerY = centerY + SPEED; }
+        if (left)  { centerX = centerX - SPEED; }
+        if (right) { centerX = centerX + SPEED; }
+
+        // keep the paddle inside its allowed area
+        if (centerX - PADDLE_WIDTH / 2 < minX) {
+            centerX = minX + PADDLE_WIDTH / 2;
+        }
+        if (centerX + PADDLE_WIDTH / 2 > maxX) {
+            centerX = maxX - PADDLE_WIDTH / 2;
+        }
+        if (centerY - PADDLE_HEIGHT / 2 < minY) {
+            centerY = minY + PADDLE_HEIGHT / 2;
+        }
+        if (centerY + PADDLE_HEIGHT / 2 > maxY) {
+            centerY = maxY - PADDLE_HEIGHT / 2;
+        }
+
+        setX(centerX - PADDLE_WIDTH / 2);
+        setY(centerY - PADDLE_HEIGHT / 2);
+        repaint();
+    }
+
+    // post: nothing - paddle movement is controlled through move() in AirHockeyGame
+    public void act() {
+    }
+
+    // pre:  g is a valid Graphics object
+    // post: paddle is drawn with a white border and the player's color inside
+    public void paint(Graphics g) {
+        g.setColor(Color.WHITE);
+        g.fillRoundRect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT, 8, 8);
+
+        g.setColor(paddleColor);
+        g.fillRoundRect(3, 3, PADDLE_WIDTH - 6, PADDLE_HEIGHT - 6, 6, 6);
+    }
+}

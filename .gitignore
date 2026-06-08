@@ -1,0 +1,17 @@
+# Java build output
+*.class
+AirHockeyMadeByYoungandBringjton/bin/
+
+# IDE and editor local state
+.vscode/
+.idea/
+*.iml
+__CREATED_BY_JAVA_LANGUAGE_SERVER__/
+
+# macOS
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
