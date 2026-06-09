@@ -407,24 +407,24 @@ public boolean RightKeyPressed() {
 	 * Starts updates to the game
 	 *
 	 * The game should automatically start.
-	 * 
+	 *
 	 * @see Game#stopGame()
 	 */
 	public void startGame() {
 		_t.start();
 	}
-	
+
 	/**
 	 * Stops updates to the game
 	 *
 	 * This can act like a "pause" method
-	 * 
+	 *
 	 * @see Game#startGame()
 	 */
 	public void stopGame() {
 		_t.stop();
 	}
-	
+
 	/**
 	 * Displays a dialog that says "Player 1 Wins!"
 	 *

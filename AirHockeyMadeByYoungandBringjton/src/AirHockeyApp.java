@@ -12,10 +12,11 @@ public class AirHockeyApp {
 
     /**
      * pre:  none
-     * post: a new HomeScreen window is created and made visible
+     * post: a new HomeScreen is created, music plays, and the window is shown
      */
     public static void showHome() {
         HomeScreen home = new HomeScreen();
+        MusicPlayer.start(MusicPlayer.findThemeFile());
         home.setVisible(true);
     }
 

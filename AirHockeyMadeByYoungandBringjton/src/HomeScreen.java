@@ -35,8 +35,6 @@ public class HomeScreen extends JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
 
-        MusicPlayer.start(MusicPlayer.findThemeFile());
-
         JPanel panel = new JPanel() {
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
