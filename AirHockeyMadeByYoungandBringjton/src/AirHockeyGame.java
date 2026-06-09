@@ -1,4 +1,8 @@
 import java.awt.Color;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 import javax.swing.JOptionPane;
@@ -181,6 +185,31 @@ public class AirHockeyGame extends Game {
                 result + "\nFinal Score: " + player1Name + " " + player1Score
                         + " - " + player2Score + " " + player2Name,
                 reason, JOptionPane.INFORMATION_MESSAGE);
+
+        saveMatchResult(result);
+        dispose();
+        AirHockeyApp.showHome();
+    }
+
+    /**
+     * pre:  player names and scores are set; result is the outcome string
+     * post: one line is appended to match_history.txt with the date, names,
+     *       score, and winner; silently does nothing if the file cannot be written
+     */
+    private void saveMatchResult(String result) {
+        try {
+            String date = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
+            String line = "[" + date + "]  "
+                    + player1Name + " " + player1Score
+                    + "  -  "
+                    + player2Score + " " + player2Name
+                    + "   ->   " + result;
+            FileWriter fw = new FileWriter("match_history.txt", true);
+            fw.write(line + "\n");
+            fw.close();
+        } catch (IOException e) {
+            // match history is non-critical; ignore write failures
+        }
     }
 
     /**
