@@ -146,7 +146,7 @@ public class Powerup extends GameObject {
             // TYPE_SIZE
             fillColor = new Color(255, 200, 0);
             glowColor = new Color(255, 220, 50, 120);
-            label     = "2x";
+            label     = "1.5x";
         }
 
         // soft glow ring
