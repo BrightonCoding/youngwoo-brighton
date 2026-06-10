@@ -193,6 +193,7 @@ public class AirHockeyGame extends Game {
         if (choice == 0 || choice == JOptionPane.CLOSED_OPTION) {
             resumeGame();
         } else {
+            MusicPlayer.stop();
             dispose();
             AirHockeyApp.showHomeQuiet();
         }

@@ -64,7 +64,7 @@ public class HomeScreen extends JFrame {
         JButton playBtn = makeButton("▶   PLAY", new Color(54, 124, 230));
         playBtn.setBounds(btnX, 268, 230, 54);
         playBtn.addActionListener(e -> {
-            MusicPlayer.stop();
+            MusicPlayer.lowerVolume();
             dispose();
             AirHockeyApp.launchGame();
         });
