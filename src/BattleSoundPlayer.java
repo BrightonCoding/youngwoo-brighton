@@ -1,10 +1,8 @@
 import java.io.File;
+import java.net.URISyntaxException;
 
 // plays a temporary sound layer during the candy battle only
 public class BattleSoundPlayer {
-
-    private static final String ITEM_BOX_SOUND =
-            "/Users/brighton/Downloads/Mario Kart Wii - Item Box - Sound Effect - Lapraniteon (128k).mp3";
 
     private static Process currentProcess = null;
     private static String soundFilePath = null;
@@ -21,8 +19,8 @@ public class BattleSoundPlayer {
     public static void startLoop() {
         stop();
 
-        File soundFile = new File(ITEM_BOX_SOUND);
-        if (!soundFile.exists()) {
+        File soundFile = findItemBoxSoundFile();
+        if (soundFile == null || !soundFile.exists()) {
             return;
         }
 
@@ -53,6 +51,25 @@ public class BattleSoundPlayer {
         if (currentProcess != null) {
             currentProcess.destroy();
             currentProcess = null;
+        }
+    }
+
+    /**
+     * finds the item-box camera sound file
+     * pre:  none
+     * post: returns the project audio file used during camera battles, or null
+     *       if the location cannot be resolved
+     */
+    private static File findItemBoxSoundFile() {
+        try {
+            File binDir = new File(
+                BattleSoundPlayer.class.getProtectionDomain()
+                                       .getCodeSource()
+                                       .getLocation()
+                                       .toURI());
+            return new File(binDir.getParentFile(), "assets/audio/item-box-camera-sound.mp3");
+        } catch (URISyntaxException e) {
+            return null;
         }
     }
 }

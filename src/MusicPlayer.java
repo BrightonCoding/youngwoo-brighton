@@ -182,9 +182,19 @@ public class MusicPlayer {
      * post: returns the requested battle-stage music file, or null if missing
      */
     public static File findBattleMusicFile() {
-        File battleMusic = new File("/Users/brighton/Downloads/Coconut Mall (From Mario Kart Wii).mp3");
-        if (battleMusic.exists()) {
-            return battleMusic;
+        try {
+            File binDir = new File(
+                MusicPlayer.class.getProtectionDomain()
+                                 .getCodeSource()
+                                 .getLocation()
+                                 .toURI());
+            File battleMusic = new File(binDir.getParentFile(),
+                    "assets/audio/coconut-mall-battle-music.mp3");
+            if (battleMusic.exists()) {
+                return battleMusic;
+            }
+        } catch (URISyntaxException e) {
+            return null;
         }
         return null;
     }
