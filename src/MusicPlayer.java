@@ -9,6 +9,9 @@ public class MusicPlayer {
     private static String   musicFilePath  = null;
     private static long     startTimeMillis = 0;
     private static String   currentVolume   = "1.00";
+    // when > 0, the next (re)start resumes the track from this position instead
+    // of the beginning — used to lower the volume without restarting the song
+    private static float    resumeSeconds   = 0;
 
     // afplay runs as a separate OS process, so it keeps playing after the JVM
     // exits — this shutdown hook kills it no matter how the game is quit
@@ -47,13 +50,25 @@ public class MusicPlayer {
 
         final String path = musicFile.getAbsolutePath();
         musicFilePath   = path;
-        startTimeMillis = System.currentTimeMillis();
         currentVolume   = "1.00";
+        resumeSeconds   = 0;
 
         loopThread = new Thread(() -> {
             try {
                 do {
-                    ProcessBuilder pb = new ProcessBuilder("afplay", "-v", currentVolume, path);
+                    // resume part-way through if asked (volume duck), otherwise
+                    // play from the start; track startTimeMillis either way
+                    float seekTo = resumeSeconds;
+                    resumeSeconds = 0;
+                    ProcessBuilder pb;
+                    if (seekTo > 0) {
+                        pb = new ProcessBuilder("afplay", "-v", currentVolume,
+                                "-s", String.format("%.2f", seekTo), path);
+                        startTimeMillis = System.currentTimeMillis() - (long) (seekTo * 1000);
+                    } else {
+                        pb = new ProcessBuilder("afplay", "-v", currentVolume, path);
+                        startTimeMillis = System.currentTimeMillis();
+                    }
                     currentProcess = pb.start();
                     currentProcess.waitFor();
                 } while (loop && path.equals(musicFilePath));
@@ -68,13 +83,16 @@ public class MusicPlayer {
     /**
      * lowers the current music volume
      * pre:  none
-     * post: the loop restarts quietly at volume 0.2
+     * post: the track keeps playing continuously from its current position at
+     *       volume 0.2, instead of restarting from the beginning
      */
     public static void lowerVolume() {
         if (currentProcess == null || musicFilePath == null) {
             return;
         }
 
+        // remember where we are so the loop resumes from here, not from the start
+        resumeSeconds = (System.currentTimeMillis() - startTimeMillis) / 1000.0f;
         currentVolume = "0.20";
         currentProcess.destroy();
         currentProcess = null;

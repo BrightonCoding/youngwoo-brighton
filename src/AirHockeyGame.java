@@ -316,7 +316,14 @@ public class AirHockeyGame extends Game {
 
         // run the camera/YOLO process off the EDT so the UI thread is not blocked
         Thread battleThread = new Thread(() -> {
+            // the camera + model take a moment to load; play the item-box sound
+            // and hold for a short delay so the loading gap isn't silent
             BattleSoundPlayer.startLoop();
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             int winner = CandyBattle.run();
             BattleSoundPlayer.stop();
 
