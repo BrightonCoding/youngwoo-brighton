@@ -4,13 +4,11 @@
  *
  * Sources (resources used to learn skills for this project):
  *   The Candy Battle minigame uses a custom YOLO object-detection model we
- *   trained ourselves on photos of candy. The training process was learned from
+ *   trained ourselves on 103 photos of candy. The training process was learned from
  *   Evan Juras' (EdjeElectronics) "Train and Deploy YOLO Models" tutorial:
  *     - YOLO training video:    https://www.youtube.com/watch?v=r0RspiLG260
  *     - Tutorial repo:          https://github.com/EdjeElectronics/Train-and-Deploy-YOLO-Models
- *     - Companion guide:        https://www.ejtech.io/learn/train-yolo-models
  *     - Colab training notebook:https://colab.research.google.com/github/EdjeElectronics/Train-and-Deploy-YOLO-Models/blob/main/Train_YOLO_Models.ipynb
- *     - Candy dataset:          https://s3.us-west-1.amazonaws.com/evanjuras.com/resources/candy_data_06JAN25.zip
  *     - Label Studio (image labelling): https://labelstud.io/
  *     - Ultralytics YOLO library:       https://github.com/ultralytics/ultralytics
  *     - Ultralytics docs:               https://docs.ultralytics.com/
@@ -19,14 +17,16 @@
  *     - Anaconda (Python environment):  https://www.anaconda.com/download
  *
  *   Retro theme assets:
- *     - "Press Start 2P" pixel font (SIL OFL): https://fonts.google.com/specimen/Press+Start+2P
- *     - Sound effects (retro blips/buzzer):    generated/sourced via https://sfxr.me/ , https://kenney.nl/ (CC0)
- *     - Music loops (match / final / sudden death): royalty-free, see assets/audio
+ *     - Pixel font (SIL OFL): https://fonts.google.com/specimen/Press+Start+2P
+ *     - Sound effects: generated with https://sfxr.me/ 
  *
- *   The final-seconds 5-4-3-2-1 build-up and the sudden-death overtime music
- *   change were inspired by the mobile game Clash Royale.
  */
+
+
 import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -41,18 +41,23 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import framework.Game;
 
-// brighton ng + youngwoo nam - ics3u culminating
-// main game class, all the actual game logic is here
+// Brighton ng + Youngwoo nam - ICS3U culminating
+// main game class
 public class AirHockeyGame extends Game {
 
-    // rink dimensions - we figured these out by trial and error until it looked right
-    private static final int WINDOW_WIDTH = 800;
-    private static final int WINDOW_HEIGHT = 600;
-    private static final int RINK_X = 50;
-    private static final int RINK_Y = 80;
-    private static final int RINK_WIDTH = 700;
-    private static final int RINK_HEIGHT = 440;
-    private static final int GOAL_HEIGHT = 150;
+    // base rink dimensions for the original 800x600 layout
+    private static final int BASE_RINK_WIDTH  = 700;
+    private static final int BASE_RINK_HEIGHT = 440;
+    private static final int BASE_GOAL_HEIGHT = 150;
+
+    // live rink geometry - recomputed in setup() so the rink and everything inside
+    // it scales to fill the full-screen window instead of sitting tiny in a corner
+    private int rinkX      = 50;
+    private int rinkY      = 80;
+    private int rinkWidth  = BASE_RINK_WIDTH;
+    private int rinkHeight = BASE_RINK_HEIGHT;
+    private int goalHeight = BASE_GOAL_HEIGHT;
+    private double scale   = 1.0;   // how much bigger than the base layout we are
     private static final int MATCH_LENGTH_SECONDS = 60;
     private static final int SCORE_LIMIT = 7;
 
@@ -66,9 +71,8 @@ public class AirHockeyGame extends Game {
     private int player2Score = 0;
     private boolean gameOver = false;
 
-    // final-seconds intensity and sudden-death overtime (Clash Royale style)
+    // final-seconds intensity (Clash Royale style)
     private static final int FINAL_COUNTDOWN_SECONDS = 5;     // when the 5-4-3-2-1 begins
-    private boolean suddenDeath        = false;  // true once a tie forces overtime
     private boolean finalIntensityOn   = false;  // true once the final-seconds music/pulse starts
     private boolean matchMusicStarted  = false;  // true once the main match loop has begun
     private int     lastCountdownSecond = -1;    // last whole second announced in the final countdown
@@ -106,8 +110,8 @@ public class AirHockeyGame extends Game {
     private boolean candyBattleDone             = false; // only happens once per match
     private int     pendingSpecialPowerupPlayer = 0;     // hook for the special powerup (coded later)
     private int     cursorControlPlayer         = 0;     // 0 = none, 1/2 = candy winner uses mouse
-    private int     cursorX                      = RINK_X + RINK_WIDTH / 2;
-    private int     cursorY                      = RINK_Y + RINK_HEIGHT / 2;
+    private int     cursorX                      = rinkX + rinkWidth / 2;
+    private int     cursorY                      = rinkY + rinkHeight / 2;
 
     /**
      * sets up the window, timer, player names, and starting objects
@@ -115,7 +119,8 @@ public class AirHockeyGame extends Game {
      * post: the rink, starting puck, paddles, and 0-0 scoreboard are ready
      */
     public void setup() {
-        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        // fill the whole screen instead of a small fixed window
+        setExtendedState(Frame.MAXIMIZED_BOTH);
         setTitle("Air Hockey");
         setBackground(new Color(20, 30, 48));
         setDelay(16);
@@ -132,21 +137,39 @@ public class AirHockeyGame extends Game {
         player1Name = promptForName("Enter Player 1's name:", "Player 1");
         player2Name = promptForName("Enter Player 2's name:", "Player 2");
 
+        // now that the window is maximized, stretch the rink to fill the screen,
+        // leaving a header strip up top for the scoreboard and a small margin
+        int windowWidth  = currentWindowWidth();
+        int windowHeight = currentWindowHeight();
+        int sideMargin   = windowWidth / 25;
+        int headerHeight = windowHeight / 8;
+        int bottomMargin = windowHeight / 20;
+        rinkX      = sideMargin;
+        rinkY      = headerHeight;
+        rinkWidth  = windowWidth - sideMargin * 2;
+        rinkHeight = windowHeight - headerHeight - bottomMargin;
+        goalHeight = rinkHeight * BASE_GOAL_HEIGHT / BASE_RINK_HEIGHT;
+        // everything inside the rink (paddles, puck, powerups) scales by this
+        scale      = (double) rinkHeight / BASE_RINK_HEIGHT;
+        cursorX = rinkX + rinkWidth / 2;
+        cursorY = rinkY + rinkHeight / 2;
+
         // puck and paddles are added before the rink so they stay visible
         addPuck(1, false);
 
+        int paddleInset = (int) Math.round(80 * scale);
         playerPaddle = new CursorControlledPaddle(
-                RINK_X + 80,
-                RINK_Y + RINK_HEIGHT / 2,
-                new Color(54, 124, 230));
+                rinkX + paddleInset,
+                rinkY + rinkHeight / 2,
+                new Color(54, 124, 230), scale);
 
         opponentPaddle = new CursorControlledPaddle(
-                RINK_X + RINK_WIDTH - 80,
-                RINK_Y + RINK_HEIGHT / 2,
-                new Color(220, 70, 60));
+                rinkX + rinkWidth - paddleInset,
+                rinkY + rinkHeight / 2,
+                new Color(220, 70, 60), scale);
 
-        rink = new Rink(WINDOW_WIDTH, WINDOW_HEIGHT,
-                RINK_X, RINK_Y, RINK_WIDTH, RINK_HEIGHT, GOAL_HEIGHT,
+        rink = new Rink(windowWidth, windowHeight,
+                rinkX, rinkY, rinkWidth, rinkHeight, goalHeight,
                 player1Name, player2Name);
 
         updateScoreboard();
@@ -161,9 +184,39 @@ public class AirHockeyGame extends Game {
         // candy battle fires once, when 15-30 seconds are left on the clock
         candyBattleTriggerRemaining = 15 + random.nextInt(16);
 
-        PauseButton pauseBtn = new PauseButton(WINDOW_WIDTH - 110, 8, () -> showPauseDialog());
+        PauseButton pauseBtn = new PauseButton(windowWidth - 110, 8, () -> showPauseDialog());
         add(pauseBtn);
         getContentPane().setComponentZOrder(pauseBtn, 0);
+    }
+
+    /**
+     * the usable width of the game window
+     * pre:  the window has been maximized
+     * post: returns the content pane width, falling back to the screen width
+     */
+    private int currentWindowWidth() {
+        int w = getContentPane().getWidth();
+        if (w <= 0) {
+            Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getMaximumWindowBounds();
+            w = screen.width;
+        }
+        return w;
+    }
+
+    /**
+     * the usable height of the game window
+     * pre:  the window has been maximized
+     * post: returns the content pane height, falling back to the screen height
+     */
+    private int currentWindowHeight() {
+        int h = getContentPane().getHeight();
+        if (h <= 0) {
+            Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getMaximumWindowBounds();
+            h = screen.height;
+        }
+        return h;
     }
 
     /**
@@ -199,9 +252,8 @@ public class AirHockeyGame extends Game {
             return;
         }
 
-        // regulation time ran out: either finish, or start sudden-death overtime
-        // on a tie. once in sudden death the clock is ignored and play continues.
-        if (!suddenDeath && isTimeUp()) {
+        // regulation time ran out: wrap up the match
+        if (isTimeUp()) {
             handleTimeUp();
             return;
         }
@@ -212,7 +264,7 @@ public class AirHockeyGame extends Game {
         }
 
         // surprise candy battle once the clock drops into the trigger window
-        if (!suddenDeath && !candyBattleDone
+        if (!candyBattleDone
                 && getTimeRemainingSeconds() <= candyBattleTriggerRemaining) {
             candyBattleDone = true;
             startCandyBattle();
@@ -220,9 +272,7 @@ public class AirHockeyGame extends Game {
         }
 
         // ramp up the atmosphere in the final few seconds of regulation
-        if (!suddenDeath) {
-            handleFinalCountdown();
-        }
+        handleFinalCountdown();
 
         handleInput();
         addTimedExtraPucks();
@@ -328,48 +378,15 @@ public class AirHockeyGame extends Game {
 
     /**
      * decides what happens when regulation time runs out
-     * pre:  the match clock has reached zero and it is not yet sudden death
-     * post: a buzzer plays; a clear winner ends the game, while a tie starts
-     *       sudden-death overtime
+     * pre:  the match clock has reached zero
+     * post: a buzzer plays and the match ends - whoever has more goals wins, or
+     *       it's a tie if the scores are level
      */
     private void handleTimeUp() {
         SoundEffects.play("buzzer");
         rink.setFinalCountdown(false);
         rink.setCenterMessage("");
-
-        if (player1Score == player2Score) {
-            enterSuddenDeath();
-        } else {
-            finishGame("Time's Up");
-        }
-    }
-
-    /**
-     * begins sudden-death overtime after a tie
-     * pre:  the score is tied and regulation time is up
-     * post: overtime music plays, the rink shows the SUDDEN DEATH treatment, and
-     *       the next goal will end the match
-     */
-    private void enterSuddenDeath() {
-        suddenDeath = true;
-        rink.setSuddenDeath(true);
-
-        File music = MusicPlayer.findAudio("sudden-death.mp3");
-        if (music != null && music.exists()) {
-            MusicPlayer.startLoop(music);
-        }
-
-        File stinger = MusicPlayer.findAudio("sudden-death-stinger.wav");
-        if (stinger != null && stinger.exists()) {
-            SoundEffects.play("sudden-death-stinger");
-        } else {
-            SoundEffects.play("buzzer");
-        }
-
-        JOptionPane.showMessageDialog(this,
-                "TIME'S UP - " + player1Score + " to " + player2Score + "\n\n"
-                + ">>> SUDDEN DEATH <<<\nNext goal wins!",
-                "Sudden Death", JOptionPane.INFORMATION_MESSAGE);
+        finishGame("Time's Up");
     }
 
     /**
@@ -496,11 +513,28 @@ public class AirHockeyGame extends Game {
                             "Candy Battle Result", JOptionPane.INFORMATION_MESSAGE);
                 }
 
+                // swap to the hyped-up track for the rest of the match now that
+                // the candy battle is over
+                startPostCandyMusic();
+
                 resumeGame();
             });
         });
         battleThread.setDaemon(true);
         battleThread.start();
+    }
+
+    /**
+     * starts the post-candy-battle music loop
+     * pre:  the candy battle just finished
+     * post: the old sudden-death track now loops as the closing-stretch music;
+     *       if the file is missing the current music just keeps playing
+     */
+    private void startPostCandyMusic() {
+        File music = MusicPlayer.findAudio("sudden-death.mp3");
+        if (music != null && music.exists()) {
+            MusicPlayer.startLoop(music);
+        }
     }
 
     /**
@@ -582,25 +616,25 @@ public class AirHockeyGame extends Game {
         if (cursorControlPlayer == 1) {
             playerPaddle.followCursor(
                     cursorX, cursorY,
-                    RINK_X, RINK_X + RINK_WIDTH / 2,
-                    RINK_Y, RINK_Y + RINK_HEIGHT);
+                    rinkX, rinkX + rinkWidth / 2,
+                    rinkY, rinkY + rinkHeight);
         } else {
             playerPaddle.move(
                     WKeyPressed(), SKeyPressed(), AKeyPressed(), DKeyPressed(),
-                    RINK_X, RINK_X + RINK_WIDTH / 2,
-                    RINK_Y, RINK_Y + RINK_HEIGHT);
+                    rinkX, rinkX + rinkWidth / 2,
+                    rinkY, rinkY + rinkHeight);
         }
 
         if (cursorControlPlayer == 2) {
             opponentPaddle.followCursor(
                     cursorX, cursorY,
-                    RINK_X + RINK_WIDTH / 2, RINK_X + RINK_WIDTH,
-                    RINK_Y, RINK_Y + RINK_HEIGHT);
+                    rinkX + rinkWidth / 2, rinkX + rinkWidth,
+                    rinkY, rinkY + rinkHeight);
         } else {
             opponentPaddle.move(
                     UpKeyPressed(), DownKeyPressed(), LeftKeyPressed(), RightKeyPressed(),
-                    RINK_X + RINK_WIDTH / 2, RINK_X + RINK_WIDTH,
-                    RINK_Y, RINK_Y + RINK_HEIGHT);
+                    rinkX + rinkWidth / 2, rinkX + rinkWidth,
+                    rinkY, rinkY + rinkHeight);
         }
     }
 
@@ -611,8 +645,8 @@ public class AirHockeyGame extends Game {
      */
     private void addPuck(int direction, boolean serveNow) {
         Puck newPuck = new Puck(
-                RINK_X + RINK_WIDTH / 2,
-                RINK_Y + RINK_HEIGHT / 2);
+                rinkX + rinkWidth / 2,
+                rinkY + rinkHeight / 2, scale);
 
         if (serveNow) {
             newPuck.serve(direction, random);
@@ -684,8 +718,8 @@ public class AirHockeyGame extends Game {
      * post: puck is pushed back in bounds and bounces if it hit a wall
      */
     private void handleWallCollision(Puck puck) {
-        int goalTop = RINK_Y + (RINK_HEIGHT - GOAL_HEIGHT) / 2;
-        int goalBottom = goalTop + GOAL_HEIGHT;
+        int goalTop = rinkY + (rinkHeight - goalHeight) / 2;
+        int goalBottom = goalTop + goalHeight;
         int puckDiameter = puck.getRadius() * 2;
 
         boolean inGoalOpening = false;
@@ -696,29 +730,29 @@ public class AirHockeyGame extends Game {
         boolean bounced = false;
 
         // top wall
-        if (puck.getY() <= RINK_Y) {
-            puck.setPuckY(RINK_Y);
+        if (puck.getY() <= rinkY) {
+            puck.setPuckY(rinkY);
             puck.bounceVertical();
             bounced = true;
         }
 
         // bottom wall
-        if (puck.getY() + puckDiameter >= RINK_Y + RINK_HEIGHT) {
-            puck.setPuckY(RINK_Y + RINK_HEIGHT - puckDiameter);
+        if (puck.getY() + puckDiameter >= rinkY + rinkHeight) {
+            puck.setPuckY(rinkY + rinkHeight - puckDiameter);
             puck.bounceVertical();
             bounced = true;
         }
 
         // left and right walls - but don't bounce if the puck is lined up with the goal,
         // otherwise you could never actually score
-        if (puck.getX() <= RINK_X && inGoalOpening == false) {
-            puck.setPuckX(RINK_X);
+        if (puck.getX() <= rinkX && inGoalOpening == false) {
+            puck.setPuckX(rinkX);
             puck.bounceHorizontal();
             bounced = true;
         }
 
-        if (puck.getX() + puckDiameter >= RINK_X + RINK_WIDTH && inGoalOpening == false) {
-            puck.setPuckX(RINK_X + RINK_WIDTH - puckDiameter);
+        if (puck.getX() + puckDiameter >= rinkX + rinkWidth && inGoalOpening == false) {
+            puck.setPuckX(rinkX + rinkWidth - puckDiameter);
             puck.bounceHorizontal();
             bounced = true;
         }
@@ -748,8 +782,8 @@ public class AirHockeyGame extends Game {
      * post: the right score goes up, scoreboard updates, and puck resets
      */
     private void handleGoal(Puck puck) {
-        int goalTop      = RINK_Y + (RINK_HEIGHT - GOAL_HEIGHT) / 2;
-        int goalBottom   = goalTop + GOAL_HEIGHT;
+        int goalTop      = rinkY + (rinkHeight - goalHeight) / 2;
+        int goalBottom   = goalTop + goalHeight;
         int puckDiameter = puck.getRadius() * 2;
 
         boolean inGoalOpening = false;
@@ -762,23 +796,23 @@ public class AirHockeyGame extends Game {
         }
 
         // puck crossed the left goal line
-        if (puck.getX() + puckDiameter < RINK_X) {
+        if (puck.getX() + puckDiameter < rinkX) {
             player2Score++;
             onGoalScored();
             if (gameOver) {
                 return;
             }
-            puck.reset(RINK_X + RINK_WIDTH / 2, RINK_Y + RINK_HEIGHT / 2, -1, random);
+            puck.reset(rinkX + rinkWidth / 2, rinkY + rinkHeight / 2, -1, random);
         }
 
         // puck crossed the right goal line
-        if (puck.getX() > RINK_X + RINK_WIDTH) {
+        if (puck.getX() > rinkX + rinkWidth) {
             player1Score++;
             onGoalScored();
             if (gameOver) {
                 return;
             }
-            puck.reset(RINK_X + RINK_WIDTH / 2, RINK_Y + RINK_HEIGHT / 2, 1, random);
+            puck.reset(rinkX + rinkWidth / 2, rinkY + rinkHeight / 2, 1, random);
         }
     }
 
@@ -786,17 +820,11 @@ public class AirHockeyGame extends Game {
      * shared reaction to any goal being scored
      * pre:  a score was just incremented
      * post: the goal sound plays and the scoreboard updates; the match ends if
-     *       this goal wins sudden death or reaches the score limit
+     *       this goal reaches the score limit
      */
     private void onGoalScored() {
         SoundEffects.play("goal");
         updateScoreboard();
-
-        if (suddenDeath) {
-            finishGame("Sudden Death");
-            return;
-        }
-
         checkScoreLimit();
     }
 
@@ -817,7 +845,7 @@ public class AirHockeyGame extends Game {
      * post: currentPowerup is set to a new active powerup and added to the game above the rink layer
      */
     private void spawnPowerup() {
-        int rinkCenterX = RINK_X + RINK_WIDTH / 2;
+        int rinkCenterX = rinkX + rinkWidth / 2;
 
         int half = random.nextInt(2);
         int owner;
@@ -826,22 +854,22 @@ public class AirHockeyGame extends Game {
 
         if (half == 0) {
             owner     = 1;
-            spawnMinX = RINK_X + 80;
-            spawnMaxX = rinkCenterX - Powerup.RADIUS;
+            spawnMinX = rinkX + 80;
+            spawnMaxX = rinkCenterX - (int) Math.round(Powerup.RADIUS * scale);
         } else {
             owner     = 2;
-            spawnMinX = rinkCenterX + Powerup.RADIUS;
-            spawnMaxX = RINK_X + RINK_WIDTH - 80;
+            spawnMinX = rinkCenterX + (int) Math.round(Powerup.RADIUS * scale);
+            spawnMaxX = rinkX + rinkWidth - 80;
         }
 
-        int spawnMinY = RINK_Y + 20;
-        int spawnMaxY = RINK_Y + RINK_HEIGHT - 20;
+        int spawnMinY = rinkY + 20;
+        int spawnMaxY = rinkY + rinkHeight - 20;
 
         int cx   = spawnMinX + random.nextInt(spawnMaxX - spawnMinX + 1);
         int cy   = spawnMinY + random.nextInt(spawnMaxY - spawnMinY + 1);
         int type = random.nextInt(3) + 1; // 1=size, 2=speed, 3=slow
 
-        currentPowerup = new Powerup(cx, cy, owner, type, System.currentTimeMillis());
+        currentPowerup = new Powerup(cx, cy, owner, type, System.currentTimeMillis(), scale);
         add(currentPowerup);
         // drawing order was super confusing at first - this shoves the powerup just
         // above the rink so it shows up on the ice but still under the puck and paddles
@@ -977,11 +1005,9 @@ public class AirHockeyGame extends Game {
             Puck puck = pucks.get(i);
             if (paddleHitsPuck(playerPaddle, puck)) {
                 puck.hitByPaddle(playerPaddle);
-                playerPaddle.flashHit();
                 playHitSound(puck);
             } else if (paddleHitsPuck(opponentPaddle, puck)) {
                 puck.hitByPaddle(opponentPaddle);
-                opponentPaddle.flashHit();
                 playHitSound(puck);
             }
         }

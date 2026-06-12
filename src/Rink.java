@@ -24,9 +24,8 @@ public class Rink extends GameObject {
     private String timeText = "01:00";
     private String centerMessage = "";
 
-    // retro atmosphere flags driven by the game in the final seconds / overtime
+    // atmosphere flag driven by the game in the final seconds of regulation
     private boolean finalCountdown = false;  // last 5 seconds of regulation
-    private boolean suddenDeath    = false;  // overtime: next goal wins
 
 
     /**
@@ -49,6 +48,16 @@ public class Rink extends GameObject {
         setSize(ww, wh);
         setX(0);
         setY(0);
+    }
+
+    /**
+     * how much bigger the HUD text/spacing should be than the original layout
+     * pre:  rinkHeight is set
+     * post: returns the rink's height relative to the base 440px rink, never below 1
+     */
+    private float hudScale() {
+        float hs = rinkHeight / 440f;
+        return hs < 1f ? 1f : hs;
     }
 
     /**
@@ -80,16 +89,6 @@ public class Rink extends GameObject {
      */
     public void setFinalCountdown(boolean on) {
         finalCountdown = on;
-        repaint();
-    }
-
-    /**
-     * turns the sudden-death overtime treatment on or off
-     * pre:  none
-     * post: when on, a pulsing red border and a "SUDDEN DEATH" banner are shown
-     */
-    public void setSuddenDeath(boolean on) {
-        suddenDeath = on;
         repaint();
     }
 
@@ -140,14 +139,14 @@ public class Rink extends GameObject {
 
         // control labels at the bottom of the header strip, one per side
         g.setColor(new Color(100, 150, 230));
-        g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        g.drawString(player1Name + " (W/A/S/D)", rinkX + 10, rinkY - 6);
+        g.setFont(new Font("Monospaced", Font.PLAIN, Math.round(12 * hudScale())));
+        g.drawString(player1Name + " (W/A/S/D)", rinkX + 10, rinkY - Math.round(6 * hudScale()));
 
         g.setColor(new Color(220, 100, 100));
-        g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        g.setFont(new Font("Monospaced", Font.PLAIN, Math.round(12 * hudScale())));
         FontMetrics lm = g.getFontMetrics();
         g.drawString(player2Name + " (Arrows)",
-                rinkX + rinkWidth - lm.stringWidth(player2Name + " (Arrows)") - 10, rinkY - 6);
+                rinkX + rinkWidth - lm.stringWidth(player2Name + " (Arrows)") - 10, rinkY - Math.round(6 * hudScale()));
     }
 
     /**
@@ -160,10 +159,10 @@ public class Rink extends GameObject {
             return;
         }
 
-        g.setFont(RetroFont.get(52f));
+        g.setFont(RetroFont.get(52f * hudScale()));
         FontMetrics fm = g.getFontMetrics();
         int x = rinkX + rinkWidth / 2 - fm.stringWidth(centerMessage) / 2;
-        int y = rinkY + rinkHeight / 2 - 95;
+        int y = rinkY + rinkHeight / 2 - Math.round(95 * hudScale());
 
         g.setColor(new Color(10, 15, 25, 170));
         g.fillRoundRect(x - 28, y - fm.getAscent() - 18,
@@ -175,13 +174,12 @@ public class Rink extends GameObject {
     }
 
     /**
-     * draws the final-seconds and sudden-death intensity overlay
-     * pre:  finalCountdown / suddenDeath flags reflect the game state
-     * post: when either is on, a red border pulses around the rink; in overtime
-     *       a "SUDDEN DEATH" banner is drawn under the timer
+     * draws the final-seconds intensity overlay
+     * pre:  the finalCountdown flag reflects the game state
+     * post: when it's on, a red border pulses around the rink
      */
     private void drawIntensity(Graphics g) {
-        if (!finalCountdown && !suddenDeath) {
+        if (!finalCountdown) {
             return;
         }
 
@@ -197,20 +195,6 @@ public class Rink extends GameObject {
             g.drawRoundRect(rinkX - 6 - i, rinkY - 6 - i,
                     rinkWidth + 12 + i * 2, rinkHeight + 12 + i * 2, 18, 18);
         }
-
-        if (suddenDeath) {
-            String banner = "SUDDEN DEATH";
-            g.setFont(RetroFont.get(16f));
-            FontMetrics fm = g.getFontMetrics();
-            int bx = rinkX + rinkWidth / 2 - fm.stringWidth(banner) / 2;
-            int by = rinkY + rinkHeight + 30;
-
-            g.setColor(new Color(10, 15, 25, 200));
-            g.fillRoundRect(bx - 12, by - fm.getAscent() - 6,
-                    fm.stringWidth(banner) + 24, fm.getAscent() + 12, 10, 10);
-            g.setColor(new Color(255, 60, 60, alpha));
-            g.drawString(banner, bx, by);
-        }
     }
 
     /**
@@ -221,10 +205,10 @@ public class Rink extends GameObject {
      *       at the horizontal center of the window, vertically centered in the header strip
      */
     private void drawTimer(Graphics g) {
-        g.setFont(RetroFont.get(20f));
+        g.setFont(RetroFont.get(20f * hudScale()));
         FontMetrics fm = g.getFontMetrics();
-        int padX  = 14;
-        int padY  = 7;
+        int padX  = Math.round(14 * hudScale());
+        int padY  = Math.round(7 * hudScale());
         int boxW  = fm.stringWidth(timeText) + padX * 2;
         int boxH  = fm.getAscent() + padY * 2;
         int boxX  = (windowWidth - boxW) / 2;
@@ -248,9 +232,9 @@ public class Rink extends GameObject {
      *       drawn above the right label, right-aligned to the label's right edge
      */
     private void drawPlayerScores(Graphics g) {
-        g.setFont(RetroFont.get(18f));
+        g.setFont(RetroFont.get(18f * hudScale()));
         FontMetrics fm = g.getFontMetrics();
-        int scoreY = rinkY - 22;
+        int scoreY = rinkY - Math.round(22 * hudScale());
 
         // player 1 - left side, aligned with the label's left edge
         g.setColor(new Color(100, 150, 230));

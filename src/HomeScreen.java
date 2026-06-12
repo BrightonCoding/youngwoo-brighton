@@ -3,6 +3,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
@@ -10,7 +12,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -26,11 +27,16 @@ public class HomeScreen extends JFrame {
     private static final int WIDTH  = 800;
     private static final int HEIGHT = 600;
 
-    // shared neon arcade palette
-    private static final Color BG_DARK     = new Color(20, 30, 48);
-    private static final Color NEON_BLUE   = new Color(62, 139, 255);
-    private static final Color NEON_CYAN   = new Color(70, 200, 220);
-    private static final Color GRID_LINE   = new Color(30, 45, 70);
+    // plain dark menu background
+    private static final Color BG_DARK = new Color(20, 30, 48);
+
+    // kept as handles so they can be repositioned whenever the window resizes
+    private JPanel  panel;
+    private JLabel  title;
+    private JLabel  byline;
+    private JButton playBtn;
+    private JButton rulesBtn;
+    private JButton historyBtn;
 
     /**
      * builds the main menu window
@@ -40,12 +46,13 @@ public class HomeScreen extends JFrame {
      */
     public HomeScreen() {
         setTitle("Air Hockey");
-        setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
+        // fill the whole screen, just like the game window
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setSize(WIDTH, HEIGHT);          // fallback size if the WM ignores maximize
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel() {
+        panel = new JPanel() {
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 drawBackground(g);
@@ -55,24 +62,18 @@ public class HomeScreen extends JFrame {
         panel.setBackground(BG_DARK);
 
         // game title in the pixel arcade font
-        JLabel title = new JLabel("AIR HOCKEY", SwingConstants.CENTER);
+        title = new JLabel("AIR HOCKEY", SwingConstants.CENTER);
         title.setFont(RetroFont.get(40f));
         title.setForeground(Color.WHITE);
-        title.setBounds(0, 110, WIDTH, 72);
         panel.add(title);
 
         // byline in a readable terminal font
-        JLabel byline = new JLabel("by Brighton & Youngwoo", SwingConstants.CENTER);
+        byline = new JLabel("by Brighton & Youngwoo", SwingConstants.CENTER);
         byline.setFont(new Font("Monospaced", Font.PLAIN, 13));
         byline.setForeground(new Color(120, 155, 200));
-        byline.setBounds(0, 188, WIDTH, 28);
         panel.add(byline);
 
-        // buttons centered horizontally
-        int btnX = (WIDTH - 230) / 2;
-
-        JButton playBtn = makeButton("PLAY", new Color(54, 124, 230));
-        playBtn.setBounds(btnX, 268, 230, 54);
+        playBtn = makeButton("PLAY", new Color(54, 124, 230));
         playBtn.addActionListener(e -> {
             MusicPlayer.lowerVolume();
             dispose();
@@ -80,17 +81,67 @@ public class HomeScreen extends JFrame {
         });
         panel.add(playBtn);
 
-        JButton rulesBtn = makeButton("RULES", new Color(40, 58, 90));
-        rulesBtn.setBounds(btnX, 342, 230, 54);
+        rulesBtn = makeButton("RULES", new Color(40, 58, 90));
         rulesBtn.addActionListener(e -> showRules());
         panel.add(rulesBtn);
 
-        JButton historyBtn = makeButton("MATCH HISTORY", new Color(40, 58, 90));
-        historyBtn.setBounds(btnX, 416, 230, 54);
+        historyBtn = makeButton("MATCH HISTORY", new Color(40, 58, 90));
         historyBtn.addActionListener(e -> showHistory());
         panel.add(historyBtn);
 
+        // reposition everything whenever the window size changes (e.g. on maximize)
+        panel.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                layoutComponents();
+            }
+        });
+
         setContentPane(panel);
+        layoutComponents();
+    }
+
+    /**
+     * positions and sizes the title, byline, and buttons for the current window size
+     * pre:  the panel and all menu components exist
+     * post: every component is centered and scaled to fit the current window;
+     *       falls back to the base 800x600 layout if the panel has no size yet
+     */
+    private void layoutComponents() {
+        int w = panel.getWidth();
+        int h = panel.getHeight();
+        if (w <= 0 || h <= 0) {
+            w = WIDTH;
+            h = HEIGHT;
+        }
+
+        // scale text/buttons up on bigger screens, never below the original size
+        float s = h / (float) HEIGHT;
+        if (s < 1f) {
+            s = 1f;
+        }
+
+        title.setFont(RetroFont.get(40f * s));
+        title.setBounds(0, Math.round(h * 0.16f), w, Math.round(72 * s));
+
+        byline.setFont(new Font("Monospaced", Font.PLAIN, Math.round(13 * s)));
+        byline.setBounds(0, Math.round(h * 0.16f) + Math.round(80 * s), w, Math.round(28 * s));
+
+        int btnW = Math.round(230 * s);
+        int btnH = Math.round(54 * s);
+        int gap  = Math.round(20 * s);
+        int btnX = (w - btnW) / 2;
+        int firstY = Math.round(h * 0.46f);
+
+        playBtn.setFont(RetroFont.get(14f * s));
+        playBtn.setBounds(btnX, firstY, btnW, btnH);
+
+        rulesBtn.setFont(RetroFont.get(14f * s));
+        rulesBtn.setBounds(btnX, firstY + (btnH + gap), btnW, btnH);
+
+        historyBtn.setFont(RetroFont.get(14f * s));
+        historyBtn.setBounds(btnX, firstY + 2 * (btnH + gap), btnW, btnH);
+
+        panel.repaint();
     }
 
     /**
@@ -105,8 +156,7 @@ public class HomeScreen extends JFrame {
         btn.setBackground(bg);
         btn.setOpaque(true);
         btn.setFocusPainted(false);
-        // sharp square border, not rounded - looks way more retro/arcade-y
-        btn.setBorder(BorderFactory.createLineBorder(NEON_CYAN, 2));
+        btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // light the button up when you hover over it so it feels clicky
@@ -114,12 +164,10 @@ public class HomeScreen extends JFrame {
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
                 btn.setBackground(hover);
-                btn.setBorder(BorderFactory.createLineBorder(NEON_BLUE, 2));
             }
 
             public void mouseExited(MouseEvent e) {
                 btn.setBackground(bg);
-                btn.setBorder(BorderFactory.createLineBorder(NEON_CYAN, 2));
             }
         });
         return btn;
@@ -131,29 +179,31 @@ public class HomeScreen extends JFrame {
      * post: a decorative rink outline is drawn behind the menu content
      */
     private void drawBackground(Graphics g) {
-        // faint grid lines over the whole screen for that arcade look
-        g.setColor(GRID_LINE);
-        for (int x = 0; x <= WIDTH; x += 40) {
-            g.drawLine(x, 0, x, HEIGHT);
-        }
-        for (int y = 0; y <= HEIGHT; y += 40) {
-            g.drawLine(0, y, WIDTH, y);
+        int w = panel.getWidth();
+        int h = panel.getHeight();
+        if (w <= 0 || h <= 0) {
+            w = WIDTH;
+            h = HEIGHT;
         }
 
-        // draw a faded fake rink behind the menu just to make it look nicer
+        // a faint rink outline that fills most of the window as a subtle backdrop
+        int marginX = w / 12;
+        int marginY = h / 12;
+        int rw = w - marginX * 2;
+        int rh = h - marginY * 2;
+
         g.setColor(new Color(28, 42, 65));
-        g.fillRoundRect(60, 60, 680, 480, 20, 20);
+        g.fillRoundRect(marginX, marginY, rw, rh, 24, 24);
 
-        // neon rink outline
-        g.setColor(NEON_BLUE);
-        g.drawRoundRect(60, 60, 680, 480, 20, 20);
+        g.setColor(new Color(35, 55, 85));
+        g.drawRoundRect(marginX, marginY, rw, rh, 24, 24);
 
         // center line
-        g.setColor(NEON_CYAN);
-        g.drawLine(WIDTH / 2, 60, WIDTH / 2, 540);
+        g.drawLine(w / 2, marginY, w / 2, marginY + rh);
 
         // center circle
-        g.drawOval(WIDTH / 2 - 50, HEIGHT / 2 - 50, 100, 100);
+        int cr = Math.min(rw, rh) / 8;
+        g.drawOval(w / 2 - cr, marginY + rh / 2 - cr, cr * 2, cr * 2);
     }
 
     /**
@@ -173,7 +223,7 @@ public class HomeScreen extends JFrame {
                 + "  Gold  1.5x  — your paddle grows 1.5x taller for 5s\n"
                 + "  Cyan  >>    — your paddle moves 1.5x faster for 5s\n"
                 + "  Orange <<   — opponent's paddle slows to 0.75x for 5s\n\n"
-                + "  Collect by moving your paddle or puck over the icon.",
+                + "  Collect by moving your paddle over the icon.",
                 "Rules", JOptionPane.INFORMATION_MESSAGE);
     }
 

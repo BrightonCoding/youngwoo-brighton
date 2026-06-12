@@ -9,7 +9,8 @@ import framework.GameObject;
 // collides() for free instead of writing our own collision math
 public class Powerup extends GameObject {
 
-    public static final int RADIUS        = 18;
+    public static final int RADIUS        = 18;   // base radius for the 800x600 layout
+    private int radius;                           // actual radius, scaled to the window
     public static final int FIELD_LIVE_MS = 5000; // ms the icon stays on the field
     public static final int EFFECT_MS     = 5000; // ms the paddle effect lasts after collection
     public static final int RESPAWN_MS    = 6000; // ms to wait before the next spawn
@@ -29,22 +30,23 @@ public class Powerup extends GameObject {
      * creates a powerup token
      * pre:  cx and cy are valid center coordinates inside the rink,
      *       owner is 1 or 2, powerupType is TYPE_SIZE/TYPE_SPEED/TYPE_SLOW,
-     *       spawnMillis is System.currentTimeMillis()
+     *       spawnMillis is System.currentTimeMillis(), scale is positive
      * post: a new active, uncollected powerup is sized and positioned so its
      *       center is at (cx, cy), ready to be added to the game
      */
-    public Powerup(int cx, int cy, int owner, int powerupType, long spawnMillis) {
+    public Powerup(int cx, int cy, int owner, int powerupType, long spawnMillis, double scale) {
         ownerPlayer = owner;
         type        = powerupType;
         spawnTime   = spawnMillis;
         active      = true;
         collected   = false;
+        radius      = Math.max(6, (int) Math.round(RADIUS * scale));
 
         // add 4px of padding on each side, otherwise the glow ring around the icon
         // gets cut off at the edges of the component (learned that the annoying way)
-        setSize(RADIUS * 2 + 8, RADIUS * 2 + 8);
-        setX(cx - RADIUS - 4);
-        setY(cy - RADIUS - 4);
+        setSize(radius * 2 + 8, radius * 2 + 8);
+        setX(cx - radius - 4);
+        setY(cy - radius - 4);
     }
 
     /**
@@ -53,7 +55,7 @@ public class Powerup extends GameObject {
      * post: returns the horizontal center of the powerup icon on screen
      */
     public int getCenterX() {
-        return getX() + RADIUS + 4;
+        return getX() + radius + 4;
     }
 
     /**
@@ -62,7 +64,7 @@ public class Powerup extends GameObject {
      * post: returns the vertical center of the powerup icon on screen
      */
     public int getCenterY() {
-        return getY() + RADIUS + 4;
+        return getY() + radius + 4;
     }
 
     /**
@@ -141,9 +143,9 @@ public class Powerup extends GameObject {
      */
     public void paint(Graphics g) {
         // center within the padded component (RADIUS + 4px glow padding each side)
-        int cx = RADIUS + 4;
-        int cy = RADIUS + 4;
-        int r  = RADIUS;
+        int cx = radius + 4;
+        int cy = radius + 4;
+        int r  = radius;
 
         // each powerup type gets its own color and label so players can tell them apart
         Color fillColor;

@@ -6,14 +6,17 @@ import framework.GameObject;
 // one paddle for one player - they can only move it around their own half of the rink
 public class Paddle extends GameObject {
 
-    private static final int PADDLE_WIDTH  = 16;
-    private static final int PADDLE_HEIGHT = 80;
-    private static final int SPEED = 5;
-    private static final int HIT_FLASH_MS = 140;
+    // base sizes for the original 800x600 layout; scaled up to fit the window
+    private static final int BASE_WIDTH  = 16;
+    private static final int BASE_HEIGHT = 80;
+    private static final int BASE_SPEED  = 5;
+
+    private final int paddleWidth;
+    private final int baseHeight;
+    private final int baseSpeed;
 
     private Color paddleColor;
-    private int currentSpeed = SPEED;
-    private long hitFlashStart = 0;
+    private int currentSpeed;
 
     // how far the paddle moved last frame - basically how hard you're swinging it.
     // we need this so a fast swing actually launches the puck instead of tapping it
@@ -22,14 +25,19 @@ public class Paddle extends GameObject {
 
     /**
      * creates a paddle at a center point
-     * pre:  centerX and centerY are valid positions on screen, color is not null
-     * post: paddle is created, sized, and placed so its center is at (centerX, centerY)
+     * pre:  centerX and centerY are valid positions on screen, color is not null,
+     *       scale is positive (1.0 = original size)
+     * post: paddle is created, sized by scale, and centered at (centerX, centerY)
      */
-    public Paddle(int centerX, int centerY, Color color) {
+    public Paddle(int centerX, int centerY, Color color, double scale) {
         paddleColor = color;
-        setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
-        setX(centerX - PADDLE_WIDTH / 2);
-        setY(centerY - PADDLE_HEIGHT / 2);
+        paddleWidth = Math.max(4, (int) Math.round(BASE_WIDTH * scale));
+        baseHeight  = Math.max(20, (int) Math.round(BASE_HEIGHT * scale));
+        baseSpeed   = Math.max(1, (int) Math.round(BASE_SPEED * scale));
+        currentSpeed = baseSpeed;
+        setSize(paddleWidth, baseHeight);
+        setX(centerX - paddleWidth / 2);
+        setY(centerY - baseHeight / 2);
     }
 
     /**
@@ -40,7 +48,7 @@ public class Paddle extends GameObject {
     public void move(boolean up, boolean down, boolean left, boolean right,
             int minX, int maxX, int minY, int maxY) {
 
-        int startCenterX = getX() + PADDLE_WIDTH / 2;
+        int startCenterX = getX() + paddleWidth / 2;
         int startCenterY = getY() + getHeight() / 2;
         int centerX = startCenterX;
         int centerY = startCenterY;
@@ -51,11 +59,11 @@ public class Paddle extends GameObject {
         if (right) { centerX = centerX + currentSpeed; }
 
         // don't let the paddle escape its own half - clamp it back inside the bounds
-        if (centerX - PADDLE_WIDTH / 2 < minX) {
-            centerX = minX + PADDLE_WIDTH / 2;
+        if (centerX - paddleWidth / 2 < minX) {
+            centerX = minX + paddleWidth / 2;
         }
-        if (centerX + PADDLE_WIDTH / 2 > maxX) {
-            centerX = maxX - PADDLE_WIDTH / 2;
+        if (centerX + paddleWidth / 2 > maxX) {
+            centerX = maxX - paddleWidth / 2;
         }
         if (centerY - getHeight() / 2 < minY) {
             centerY = minY + getHeight() / 2;
@@ -64,7 +72,7 @@ public class Paddle extends GameObject {
             centerY = maxY - getHeight() / 2;
         }
 
-        setX(centerX - PADDLE_WIDTH / 2);
+        setX(centerX - paddleWidth / 2);
         setY(centerY - getHeight() / 2);
         velocityX = centerX - startCenterX;
         velocityY = centerY - startCenterY;
@@ -107,7 +115,7 @@ public class Paddle extends GameObject {
      */
     public void grow() {
         int centerY = getY() + getHeight() / 2;
-        setSize(PADDLE_WIDTH, PADDLE_HEIGHT * 3 / 2);
+        setSize(paddleWidth, baseHeight * 3 / 2);
         setY(centerY - getHeight() / 2);
         repaint();
     }
@@ -115,11 +123,11 @@ public class Paddle extends GameObject {
     /**
      * returns the paddle to normal height
      * pre:  paddle has been grown via grow()
-     * post: paddle height returns to PADDLE_HEIGHT; vertical center is preserved
+     * post: paddle height returns to baseHeight; vertical center is preserved
      */
     public void revert() {
         int centerY = getY() + getHeight() / 2;
-        setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+        setSize(paddleWidth, baseHeight);
         setY(centerY - getHeight() / 2);
         repaint();
     }
@@ -130,7 +138,7 @@ public class Paddle extends GameObject {
      * post: bumps the paddle's speed to 1.5x normal until revertSpeed() puts it back
      */
     public void speedUp() {
-        currentSpeed = SPEED * 3 / 2;
+        currentSpeed = baseSpeed * 3 / 2;
     }
 
     /**
@@ -139,26 +147,16 @@ public class Paddle extends GameObject {
      * post: drops the paddle's speed to 0.75x normal until revertSpeed() fixes it
      */
     public void slowDown() {
-        currentSpeed = SPEED * 3 / 4;
+        currentSpeed = baseSpeed * 3 / 4;
     }
 
     /**
      * returns the paddle speed to normal
      * pre:  speedUp() or slowDown() was called
-     * post: currentSpeed is restored to the default SPEED
+     * post: currentSpeed is restored to the default baseSpeed
      */
     public void revertSpeed() {
-        currentSpeed = SPEED;
-    }
-
-    /**
-     * briefly highlights the paddle after hitting a puck
-     * pre:  paddle exists on screen
-     * post: the next paint calls draw a brighter paddle for a short time
-     */
-    public void flashHit() {
-        hitFlashStart = System.currentTimeMillis();
-        repaint();
+        currentSpeed = baseSpeed;
     }
 
     /**
@@ -175,20 +173,10 @@ public class Paddle extends GameObject {
      * post: paddle is drawn with a white border and the player's color inside
      */
     public void paint(Graphics g) {
-        boolean flashing = System.currentTimeMillis() - hitFlashStart < HIT_FLASH_MS;
+        g.setColor(Color.WHITE);
+        g.fillRoundRect(0, 0, paddleWidth, getHeight(), 8, 8);
 
-        if (flashing) {
-            g.setColor(new Color(255, 255, 180));
-        } else {
-            g.setColor(Color.WHITE);
-        }
-        g.fillRoundRect(0, 0, PADDLE_WIDTH, getHeight(), 8, 8);
-
-        if (flashing) {
-            g.setColor(paddleColor.brighter());
-        } else {
-            g.setColor(paddleColor);
-        }
-        g.fillRoundRect(3, 3, PADDLE_WIDTH - 6, getHeight() - 6, 6, 6);
+        g.setColor(paddleColor);
+        g.fillRoundRect(3, 3, paddleWidth - 6, getHeight() - 6, 6, 6);
     }
 }

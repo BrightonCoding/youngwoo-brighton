@@ -6,11 +6,12 @@ public class CursorControlledPaddle extends Paddle {
 
     /**
      * creates a paddle that can follow the cursor
-     * pre:  centerX and centerY are valid positions on screen, color is not null
-     * post: cursor controlled paddle is created like a normal paddle
+     * pre:  centerX and centerY are valid positions on screen, color is not null,
+     *       scale is positive (1.0 = original size)
+     * post: cursor controlled paddle is created like a normal paddle, sized by scale
      */
-    public CursorControlledPaddle(int centerX, int centerY, Color color) {
-        super(centerX, centerY, color);
+    public CursorControlledPaddle(int centerX, int centerY, Color color, double scale) {
+        super(centerX, centerY, color, scale);
     }
 
     /**

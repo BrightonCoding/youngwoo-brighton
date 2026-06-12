@@ -7,13 +7,20 @@ import framework.GameObject;
 // the puck - the little disc that flies around and bounces off the walls and paddles
 public class Puck extends GameObject {
 
-    private static final int RADIUS   = 14;
-    private static final int DIAMETER = RADIUS * 2;
-    private static final double START_SPEED = 11.0;
-    private static final double MIN_SPEED   = 9.5;
-    private static final double MAX_SPEED   = 17.0;
+    // base values for the original 800x600 layout; scaled up to fit the window
+    private static final int BASE_RADIUS = 14;
+    private static final double BASE_START_SPEED = 11.0;
+    private static final double BASE_MIN_SPEED   = 9.5;
+    private static final double BASE_MAX_SPEED   = 17.0;
     private static final double HIT_BOOST   = 1.08;
     private static final double FRICTION    = 0.996;
+
+    // actual sizes/speeds for this match, scaled from the base values above
+    private final int    radius;
+    private final int    diameter;
+    private final double startSpeed;
+    private final double minSpeed;
+    private final double maxSpeed;
     // how much of the paddle's swing speed gets passed to the puck when you hit it.
     // played with this number a lot - too high and the puck rockets off uncontrollably
     private static final double SWING_TRANSFER = 0.8;
@@ -25,11 +32,17 @@ public class Puck extends GameObject {
 
     /**
      * creates a puck at a center point
-     * pre:  centerX and centerY are valid positions inside the rink
-     * post: puck is created and placed so its center is at (centerX, centerY)
+     * pre:  centerX and centerY are valid positions inside the rink,
+     *       scale is positive (1.0 = original size)
+     * post: puck is created, sized by scale, and centered at (centerX, centerY)
      */
-    public Puck(int centerX, int centerY) {
-        setSize(DIAMETER, DIAMETER);
+    public Puck(int centerX, int centerY, double scale) {
+        radius     = Math.max(4, (int) Math.round(BASE_RADIUS * scale));
+        diameter   = radius * 2;
+        startSpeed = BASE_START_SPEED * scale;
+        minSpeed   = BASE_MIN_SPEED * scale;
+        maxSpeed   = BASE_MAX_SPEED * scale;
+        setSize(diameter, diameter);
         setCenter(centerX, centerY);
     }
 
@@ -39,7 +52,7 @@ public class Puck extends GameObject {
      * post: returns the x coordinate of the center of the puck
      */
     public int getCenterX() {
-        return getX() + RADIUS;
+        return getX() + radius;
     }
 
     /**
@@ -48,7 +61,7 @@ public class Puck extends GameObject {
      * post: returns the y coordinate of the center of the puck
      */
     public int getCenterY() {
-        return getY() + RADIUS;
+        return getY() + radius;
     }
 
     /**
@@ -57,7 +70,7 @@ public class Puck extends GameObject {
      * post: returns the radius of the puck in pixels
      */
     public int getRadius() {
-        return RADIUS;
+        return radius;
     }
 
     /**
@@ -66,8 +79,8 @@ public class Puck extends GameObject {
      * post: puck is moved so its center is at (centerX, centerY)
      */
     private void setCenter(int centerX, int centerY) {
-        exactX = centerX - RADIUS;
-        exactY = centerY - RADIUS;
+        exactX = centerX - radius;
+        exactY = centerY - radius;
         setX((int)Math.round(exactX));
         setY((int)Math.round(exactY));
     }
@@ -83,8 +96,8 @@ public class Puck extends GameObject {
             vertical = -vertical;
         }
 
-        xSpeed = START_SPEED * direction;
-        ySpeed = START_SPEED * vertical;
+        xSpeed = startSpeed * direction;
+        ySpeed = startSpeed * vertical;
         clampSpeed();
     }
 
@@ -109,8 +122,8 @@ public class Puck extends GameObject {
         ySpeed = ySpeed + paddle.getVelocityY() * SWING_TRANSFER;
 
         // make sure the puck always leaves with at least a playable speed
-        if (Math.abs(xSpeed) < MIN_SPEED) {
-            xSpeed = (xSpeed < 0) ? -MIN_SPEED : MIN_SPEED;
+        if (Math.abs(xSpeed) < minSpeed) {
+            xSpeed = (xSpeed < 0) ? -minSpeed : minSpeed;
         }
 
         multiplySpeed(HIT_BOOST);
@@ -120,7 +133,7 @@ public class Puck extends GameObject {
         if (xSpeed > 0) {
             exactX = paddle.getX() + paddle.getWidth() + 1;
         } else {
-            exactX = paddle.getX() - DIAMETER - 1;
+            exactX = paddle.getX() - diameter - 1;
         }
 
         setX((int)Math.round(exactX));
@@ -196,24 +209,24 @@ public class Puck extends GameObject {
     /**
      * applies light friction to a moving puck
      * pre:  puck velocity has already been updated this frame
-     * post: puck slows slightly, but not below MIN_SPEED unless stopped
+     * post: puck slows slightly, but not below minSpeed unless stopped
      */
     private void applyFriction() {
         double speed = getSpeed();
-        if (speed <= MIN_SPEED || speed == 0) {
+        if (speed <= minSpeed || speed == 0) {
             return;
         }
 
         multiplySpeed(FRICTION);
-        if (getSpeed() < MIN_SPEED) {
-            setSpeed(MIN_SPEED);
+        if (getSpeed() < minSpeed) {
+            setSpeed(minSpeed);
         }
     }
 
     /**
      * multiplies the current velocity
      * pre:  factor is positive
-     * post: velocity magnitude is multiplied and capped at MAX_SPEED
+     * post: velocity magnitude is multiplied and capped at maxSpeed
      */
     private void multiplySpeed(double factor) {
         xSpeed = xSpeed * factor;
@@ -224,11 +237,11 @@ public class Puck extends GameObject {
     /**
      * caps the current velocity
      * pre:  velocity may be any magnitude
-     * post: velocity magnitude is no greater than MAX_SPEED
+     * post: velocity magnitude is no greater than maxSpeed
      */
     private void clampSpeed() {
-        if (getSpeed() > MAX_SPEED) {
-            setSpeed(MAX_SPEED);
+        if (getSpeed() > maxSpeed) {
+            setSpeed(maxSpeed);
         }
     }
 
@@ -248,7 +261,7 @@ public class Puck extends GameObject {
      *       to make the harder hits sound louder, which is a nice little touch
      */
     public double getSpeedFraction() {
-        double frac = getSpeed() / MAX_SPEED;
+        double frac = getSpeed() / maxSpeed;
         if (frac < 0) {
             frac = 0;
         }
@@ -290,9 +303,9 @@ public class Puck extends GameObject {
      */
     public void paint(Graphics g) {
         g.setColor(Color.WHITE);
-        g.fillOval(0, 0, DIAMETER, DIAMETER);
+        g.fillOval(0, 0, diameter, diameter);
 
         g.setColor(Color.DARK_GRAY);
-        g.fillOval(3, 3, DIAMETER - 6, DIAMETER - 6);
+        g.fillOval(3, 3, diameter - 6, diameter - 6);
     }
 }
