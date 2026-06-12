@@ -5,8 +5,8 @@ public class BattleSoundPlayer {
 
     private static final String SOUND_FILE = "assets/audio/item-box-camera-sound.mp3";
 
-    private static Process soundProcess = null;
-    private static boolean playing = false;
+    private static Process currentSound = null;
+    private static boolean keepPlaying = false;
 
     /**
      * pre:  the item-box sound file exists in assets/audio
@@ -20,16 +20,15 @@ public class BattleSoundPlayer {
             return;
         }
 
-        playing = true;
+        keepPlaying = true;
 
         Thread soundThread = new Thread(() -> {
-            while (playing) {
+            while (keepPlaying) {
                 try {
-                    soundProcess = new ProcessBuilder("afplay", soundFile.getPath()).start();
-                    soundProcess.waitFor();
+                    currentSound = new ProcessBuilder("afplay", soundFile.getPath()).start();
+                    currentSound.waitFor();
                 } catch (Exception e) {
-                    // sound's not important enough to crash over, so just stop trying
-                    playing = false;
+                    keepPlaying = false;
                 }
             }
         });
@@ -42,10 +41,10 @@ public class BattleSoundPlayer {
      * post: the item-box battle sound stops immediately
      */
     public static void stop() {
-        playing = false;
-        if (soundProcess != null) {
-            soundProcess.destroy();
-            soundProcess = null;
+        keepPlaying = false;
+        if (currentSound != null) {
+            currentSound.destroy();
+            currentSound = null;
         }
     }
 }

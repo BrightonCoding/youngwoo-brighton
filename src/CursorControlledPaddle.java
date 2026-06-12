@@ -1,7 +1,6 @@
 import java.awt.Color;
 
-// a special paddle that follows your mouse instead of the keys - this is the reward
-// you get for winning the candy battle. still can't leave its own half though
+// a special paddle that follows your mouse instead of the keys: reward for winning the candy battle
 public class CursorControlledPaddle extends Paddle {
 
     /**
@@ -15,7 +14,7 @@ public class CursorControlledPaddle extends Paddle {
     }
 
     /**
-     * snaps the paddle to wherever the mouse is
+     * moves the paddle to wherever the mouse is
      * pre:  minX, maxX, minY, maxY define the allowed rink area
      * post: the paddle jumps to the cursor, but we still clamp it so it can't slide
      *       out of its half of the rink
