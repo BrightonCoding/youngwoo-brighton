@@ -49,16 +49,6 @@ public class Rink extends GameObject {
     }
 
     /**
-     * how much bigger the HUD text/spacing should be than the original layout
-     * pre:  rinkHeight is set
-     * post: returns the rink's height relative to the base 440px rink, never below 1
-     */
-    private float hudScale() {
-        float hs = rinkHeight / 440f;
-        return hs < 1f ? 1f : hs;
-    }
-
-    /**
      * updates the score and timer shown at the top of the rink
      * pre:  the game gives the current scores and timer text
      * post: the new scoreboard values are saved and the rink repaints
@@ -124,14 +114,14 @@ public class Rink extends GameObject {
 
         // control labels at the bottom of the header strip, one per side
         g.setColor(new Color(100, 150, 230));
-        g.setFont(new Font("Monospaced", Font.PLAIN, Math.round(12 * hudScale())));
-        g.drawString(player1Name + " (W/A/S/D)", rinkX + 10, rinkY - Math.round(6 * hudScale()));
+        g.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        g.drawString(player1Name + " (W/A/S/D)", rinkX + 10, rinkY - 8);
 
         g.setColor(new Color(220, 100, 100));
-        g.setFont(new Font("Monospaced", Font.PLAIN, Math.round(12 * hudScale())));
+        g.setFont(new Font("Monospaced", Font.PLAIN, 14));
         FontMetrics lm = g.getFontMetrics();
         g.drawString(player2Name + " (Arrows)",
-                rinkX + rinkWidth - lm.stringWidth(player2Name + " (Arrows)") - 10, rinkY - Math.round(6 * hudScale()));
+                rinkX + rinkWidth - lm.stringWidth(player2Name + " (Arrows)") - 10, rinkY - 8);
     }
 
     /**
@@ -144,10 +134,10 @@ public class Rink extends GameObject {
             return;
         }
 
-        g.setFont(new Font("SansSerif", Font.BOLD, Math.round(52 * hudScale())));
+        g.setFont(new Font("SansSerif", Font.BOLD, 52));
         FontMetrics fm = g.getFontMetrics();
         int x = rinkX + rinkWidth / 2 - fm.stringWidth(centerMessage) / 2;
-        int y = rinkY + rinkHeight / 2 - Math.round(95 * hudScale());
+        int y = rinkY + rinkHeight / 2 - 95;
 
         g.setColor(new Color(10, 15, 25, 170));
         g.fillRoundRect(x - 28, y - fm.getAscent() - 18,
@@ -165,10 +155,10 @@ public class Rink extends GameObject {
      *       at the horizontal center of the window, vertically centered in the header strip
      */
     private void drawTimer(Graphics g) {
-        g.setFont(new Font("Monospaced", Font.BOLD, Math.round(20 * hudScale())));
+        g.setFont(new Font("Monospaced", Font.BOLD, 20));
         FontMetrics fm = g.getFontMetrics();
-        int padX  = Math.round(14 * hudScale());
-        int padY  = Math.round(7 * hudScale());
+        int padX  = 14;
+        int padY  = 7;
         int boxW  = fm.stringWidth(timeText) + padX * 2;
         int boxH  = fm.getAscent() + padY * 2;
         int boxX  = (windowWidth - boxW) / 2;
@@ -190,9 +180,9 @@ public class Rink extends GameObject {
      *       drawn above the right label, right-aligned to the label's right edge
      */
     private void drawPlayerScores(Graphics g) {
-        g.setFont(new Font("Monospaced", Font.BOLD, Math.round(18 * hudScale())));
+        g.setFont(new Font("Monospaced", Font.BOLD, 18));
         FontMetrics fm = g.getFontMetrics();
-        int scoreY = rinkY - Math.round(22 * hudScale());
+        int scoreY = rinkY - 22;
 
         // player 1 - left side, aligned with the label's left edge
         g.setColor(new Color(100, 150, 230));
