@@ -148,11 +148,9 @@ public class Rink extends GameObject {
     }
 
     /**
-     * draws the timer: timeText in a monospaced font centered horizontally in the header,
-     * surrounded by a white rectangle
+     * draws the timer surrounded by a white rectangle
      * pre:  timeText is not null; rinkY defines the available header height
-     * post: a filled rectangle with a white border and monospaced time text is painted
-     *       at the horizontal center of the window, vertically centered in the header strip
+     * post: a filled rectangle with a white border and monospaced time text is created
      */
     private void drawTimer(Graphics g) {
         g.setFont(new Font("Monospaced", Font.BOLD, 20));

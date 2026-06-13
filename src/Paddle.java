@@ -27,8 +27,7 @@ public class Paddle extends GameObject {
 
     /**
      * creates a paddle at a center point
-     * pre:  centerX and centerY are valid positions on screen, color is not null,
-     *       scale is positive (1.0 = original size)
+     * pre:  centerX and centerY are valid positions on screen
      * post: paddle is created, sized by scale, and centered at (centerX, centerY)
      */
     public Paddle(int centerX, int centerY, Color color, double scale) {
@@ -141,14 +140,12 @@ public class Paddle extends GameObject {
         currentSpeed = baseSpeed * 3 / 2;
     }
 
-    /**
-     * slows the paddle down (this one gets used on your opponent, hehe)
-     * pre:  paddle exists
-     * post: drops the paddle's speed to 0.75x normal until revertSpeed() fixes it
-     */
     public void slowDown() {
         currentSpeed = baseSpeed * 3 / 4;
     }
+
+
+
 
     public void revertSpeed() {
         currentSpeed = baseSpeed;

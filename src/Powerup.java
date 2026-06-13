@@ -5,126 +5,118 @@ import java.awt.Graphics;
 
 import framework.GameObject;
 
-// the powerup token that shows up on the ice. we extend GameObject so we get
-// collides() for free instead of writing our own collision math
 public class Powerup extends GameObject {
 
-    public static final int RADIUS        = 18;   // base radius for the 800x600 layout
-    private int radius;                           // actual radius, scaled to the window
-    public static final int FIELD_LIVE_MS = 5000; // ms the icon stays on the field
-    public static final int EFFECT_MS     = 5000; // ms the paddle effect lasts after collection
-    public static final int RESPAWN_MS    = 6000; // ms to wait before the next spawn
+    public static final int RADIUS        = 18;
+    public static final int FIELD_LIVE_MS = 5000;
+    public static final int EFFECT_MS     = 5000;
+    public static final int RESPAWN_MS    = 6000;
 
-    // powerup types
-    public static final int TYPE_SIZE  = 1; // makes owner paddle taller
-    public static final int TYPE_SPEED = 2; // makes owner paddle faster
-    public static final int TYPE_SLOW  = 3; // slows the other paddle
+    public static final int TYPE_SIZE  = 1;
+    public static final int TYPE_SPEED = 2;
+    public static final int TYPE_SLOW  = 3;
 
-    private int  ownerPlayer; // 1 = left half (player 1), 2 = right half (player 2)
+    // index directly by type (1–3), slot 0 is just a placeholder
+    private static final Color[] FILL_COLORS = {
+        null,
+        new Color(255, 200,   0),   // SIZE  — gold
+        new Color(  0, 200, 220),   // SPEED — cyan
+        new Color(255, 140,   0),   // SLOW  — orange
+    };
+    private static final Color[] GLOW_COLORS = {
+        null,
+        new Color(255, 220,  50, 120),
+        new Color(  0, 220, 255, 120),
+        new Color(255, 160,   0, 120),
+    };
+    private static final String[] LABELS = {
+        null, "1.5x", ">>", "<<"
+    };
+
+    private int  radius;
+    private int  ownerPlayer;
     private int  type;
     private long spawnTime;
 
     /**
-     * creates a powerup token
-     * pre:  cx and cy are valid center coordinates inside the rink,
-     *       owner is 1 or 2, powerupType is TYPE_SIZE/TYPE_SPEED/TYPE_SLOW,
-     *       spawnMillis is System.currentTimeMillis(), scale is positive
-     * post: a new active, uncollected powerup is sized and positioned so its
-     *       center is at (cx, cy), ready to be added to the game
+     * Creates a powerup token centered at (cx, cy).
+     * Pre:  cx and cy are valid coordinates inside the rink; owner is 1 or 2;
+     *       powerupType is one of TYPE_SIZE, TYPE_SPEED, or TYPE_SLOW;
+     *       spawnMillis is the current time; scale is positive.
+     * Post: A new active, uncollected powerup is sized and positioned so its
+     *       center is at (cx, cy), ready to be added to the game.
      */
     public Powerup(int cx, int cy, int owner, int powerupType, long spawnMillis, double scale) {
         ownerPlayer = owner;
         type        = powerupType;
         spawnTime   = spawnMillis;
         radius      = Math.max(6, (int) Math.round(RADIUS * scale));
-
-        // add 4px of padding on each side, otherwise the glow ring around the icon
-        // gets cut off at the edges of the component (learned that the annoying way)
-        setSize(radius * 2 + 8, radius * 2 + 8);
-        setX(cx - radius - 4);
-        setY(cy - radius - 4);
+        positionAt(cx, cy);
     }
 
     /**
-     * gets the player who benefits from this powerup
-     * pre:  powerup exists
-     * post: returns 1 if this powerup benefits player 1, 2 if it benefits player 2
+     * Sets the component's size and position so the powerup is centered at (cx, cy).
+     * Pre:  radius is already set; cx and cy are valid rink coordinates.
+     * Post: The component bounds are updated with 4px glow padding on each side.
      */
-    public int getOwnerPlayer() {
-        return ownerPlayer;
+    private void positionAt(int cx, int cy) {
+        int pad = 4; // glow ring bleeds past the circle edge, so we need a little breathing room
+        setSize((radius + pad) * 2, (radius + pad) * 2);
+        setX(cx - radius - pad);
+        setY(cy - radius - pad);
     }
 
     /**
-     * gets the powerup effect type
-     * pre:  powerup exists
-     * post: returns the type constant (TYPE_SIZE, TYPE_SPEED, or TYPE_SLOW)
+     * Returns the player who benefits from collecting this powerup.
+     * Pre:  The powerup exists.
+     * Post: Returns 1 for player 1 (left side) or 2 for player 2 (right side).
      */
-    public int getType() {
-        return type;
-    }
+    public int getOwnerPlayer() { return ownerPlayer; }
 
     /**
-     * checks if the icon has been sitting around too long
-     * pre:  nowMillis is the current time
-     * post: returns true when the powerup should disappear
+     * Returns the effect type of this powerup.
+     * Pre:  The powerup exists.
+     * Post: Returns one of TYPE_SIZE, TYPE_SPEED, or TYPE_SLOW.
+     */
+    public int getType() { return type; }
+
+    /**
+     * Checks whether this powerup has been on the field too long and should disappear.
+     * Pre:  nowMillis is the current system time in milliseconds.
+     * Post: Returns true if the powerup has been alive for at least FIELD_LIVE_MS milliseconds.
      */
     public boolean isExpired(long nowMillis) {
         return nowMillis - spawnTime >= FIELD_LIVE_MS;
     }
+    public void act() {}
 
     /**
-     * leaves powerup lifecycle behavior to GamePanel
-     * pre:  none
-     * post: nothing - powerup has no per-frame behavior; lifecycle is managed by GamePanel
-     */
-    public void act() {
-    }
-
-    /**
-     * draws the powerup icon
-     * pre:  g is a valid Graphics object
-     * post: the powerup icon is drawn in the component's local coordinate space:
-     *       gold "1.5x" for size, cyan arrows for speed, orange arrows for slow opponent
+     * Draws the powerup icon in the component's local coordinate space.
+     * Pre:  g is a valid Graphics context; type is a valid TYPE_* constant.
+     * Post: A glow ring, filled circle, white border, and centered label are drawn
+     *       using colors and text looked up from the type arrays.
      */
     public void paint(Graphics g) {
-        // center within the padded component (RADIUS + 4px glow padding each side)
+        // component center accounts for the 4px glow padding
         int cx = radius + 4;
         int cy = radius + 4;
         int r  = radius;
 
-        // each powerup type gets its own color and label so players can tell them apart
-        Color fillColor;
-        Color glowColor;
-        String label;
+        Color  fill  = FILL_COLORS[type];
+        Color  glow  = GLOW_COLORS[type];
+        String label = LABELS[type];
 
-        if (type == TYPE_SPEED) {
-            fillColor = new Color(0, 200, 220);
-            glowColor = new Color(0, 220, 255, 120);
-            label     = ">>";
-        } else if (type == TYPE_SLOW) {
-            fillColor = new Color(255, 140, 0);
-            glowColor = new Color(255, 160, 0, 120);
-            label     = "<<";
-        } else {
-            // TYPE_SIZE
-            fillColor = new Color(255, 200, 0);
-            glowColor = new Color(255, 220, 50, 120);
-            label     = "1.5x";
-        }
-
-        // soft glow ring
-        g.setColor(glowColor);
+        // soft glow ring behind the circle
+        g.setColor(glow);
         g.fillOval(cx - r - 4, cy - r - 4, (r + 4) * 2, (r + 4) * 2);
 
-        // filled circle
-        g.setColor(fillColor);
+        g.setColor(fill);
         g.fillOval(cx - r, cy - r, r * 2, r * 2);
 
-        // white border
         g.setColor(Color.WHITE);
         g.drawOval(cx - r, cy - r, r * 2, r * 2);
 
-        // centered label
+        // center the label both horizontally and vertically
         g.setColor(Color.BLACK);
         g.setFont(new Font("SansSerif", Font.BOLD, 8));
         FontMetrics fm = g.getFontMetrics();
