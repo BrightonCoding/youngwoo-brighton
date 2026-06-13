@@ -4,10 +4,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -125,10 +124,10 @@ public class HomeScreen extends JFrame {
 
         try {
             StringBuilder sb = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+            Scanner reader = new Scanner(file);
+
+            while (reader.hasNextLine()) {
+                sb.append(reader.nextLine()).append("\n");
             }
             reader.close();
 
@@ -141,7 +140,7 @@ public class HomeScreen extends JFrame {
             JOptionPane.showMessageDialog(this, scroll,
                     "Match History", JOptionPane.PLAIN_MESSAGE);
 
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             JOptionPane.showMessageDialog(this,
                     "Could not read match history.",
                     "Error", JOptionPane.ERROR_MESSAGE);
