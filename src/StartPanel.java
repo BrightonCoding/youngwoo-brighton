@@ -27,10 +27,15 @@ public class StartPanel extends JFrame {
         setSize(500, 400);
         setLocationRelativeTo(null);
 
+        // We decided to use JPanel and JButton instead of extending GameObject, so we went on Google and went to the tutorials point to learn the code conventions
+        // https://www.tutorialspoint.com/swing/swing_jbutton.htm
+
         JPanel panel = new JPanel(new GridLayout(5, 1, 0, 10));
         panel.setBackground(new Color(20, 30, 48));
         panel.setBorder(BorderFactory.createEmptyBorder(45, 80, 45, 80));
 
+        //A bunch of design elementas... including the font types
+        //  We use sans serif to give a more professional feel, and we also use some lighter colors for the text to accompany the darker colors of the background 
         JLabel title = new JLabel("AIR HOCKEY");
         title.setFont(new Font("SansSerif", Font.BOLD, 36));
         title.setForeground(Color.WHITE);
@@ -46,6 +51,8 @@ public class StartPanel extends JFrame {
             AirHockeyApp.launchGame();
         });
 
+
+        // direct to the joptionpanes
         JButton howToPlayButton = makeButton("HOW TO PLAY", () -> showRules());
         JButton historyButton = makeButton("MATCH HISTORY", () -> showHistory());
 
@@ -70,7 +77,7 @@ public class StartPanel extends JFrame {
     }
 
     /**
-     * shows the rules dialog
+     * shows the rules dialog wuth joptionpane
      * pre:  none
      * post: a dialog showing the game controls and rules is displayed
      */
@@ -91,7 +98,7 @@ public class StartPanel extends JFrame {
     }
 
     /**
-     * shows saved match history
+     * shows saved match history which is pulled from the txt file match_history.txt
      * pre:  none
      * post: reads match_history.txt and displays all past results in a dialog;
      *       shows a message if no matches have been played yet
@@ -99,12 +106,15 @@ public class StartPanel extends JFrame {
     private void showHistory() {
         File file = new File("match_history.txt");
 
+        // check if it's. the user's first time playing the game, s0p so it will display an error message (more of like a gentle reminder) that they havent played a mat ch yet
         if (!file.exists()) {
             JOptionPane.showMessageDialog(this,
                     "No matches played yet.",
                     "Match History", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
+
+        // writes all the match history by appending strings
 
         try {
             StringBuilder sb = new StringBuilder();
