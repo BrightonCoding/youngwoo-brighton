@@ -12,16 +12,16 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-// this grew out of the milestone StartPanel
+// this keeps the milestone StartPanel name
 // it is still the start screen, but now it also has rules and match history
-public class HomeScreen extends JFrame {
+public class StartPanel extends JFrame {
 
     /**
      * builds the main menu window
      * pre:  none
      * post: the home screen window is built with a title, byline, and three buttons
      */
-    public HomeScreen() {
+    public StartPanel() {
         setTitle("Air Hockey");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(500, 400);

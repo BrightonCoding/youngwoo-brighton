@@ -266,9 +266,9 @@ public class Puck extends GameObject {
     }
 
     /**
-     * leaves puck frame behavior to AirHockeyGame
+     * leaves puck frame behavior to GamePanel
      * pre:  none
-     * post: nothing - movement is handled in AirHockeyGame, not here
+     * post: nothing - movement is handled in GamePanel, not here
      */
     public void act() {
     }

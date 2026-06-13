@@ -7,7 +7,7 @@ This is an Eclipse-style Java Swing air hockey game. It uses only the JDK standa
 ## Important Paths
 
 - Main class: `src/AirHockeyApp.java`
-- Main game logic: `src/AirHockeyGame.java`
+- Main game logic: `src/GamePanel.java`
 - Game objects: `src/Paddle.java`, `Puck.java`, and `Rink.java`
 - Framework code: `src/framework/Game.java` and `GameObject.java`
 - Generated output: `bin`
@@ -15,7 +15,7 @@ This is an Eclipse-style Java Swing air hockey game. It uses only the JDK standa
 
 ## How The Code Works
 
-`AirHockeyApp` starts the program. `AirHockeyGame` extends `framework.Game`, configures the window, prompts for player names, creates the rink, paddles, and puck, then handles each frame in `act()`.
+`AirHockeyApp` starts the program. `GamePanel` extends `framework.Game`, configures the window, prompts for player names, creates the rink, paddles, and puck, then handles each frame in `act()`.
 
 `framework.Game` owns the Swing `Timer`, keyboard listeners, object list, and JFrame setup. It calls the game's `act()` method and then calls each added `GameObject`'s `act()` method.
 

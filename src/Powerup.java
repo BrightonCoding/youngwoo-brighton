@@ -73,9 +73,9 @@ public class Powerup extends GameObject {
     }
 
     /**
-     * leaves powerup lifecycle behavior to AirHockeyGame
+     * leaves powerup lifecycle behavior to GamePanel
      * pre:  none
-     * post: nothing - powerup has no per-frame behavior; lifecycle is managed by AirHockeyGame
+     * post: nothing - powerup has no per-frame behavior; lifecycle is managed by GamePanel
      */
     public void act() {
     }

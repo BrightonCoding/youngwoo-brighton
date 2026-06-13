@@ -6,7 +6,7 @@ import java.awt.Graphics;
 import framework.GameObject;
 
 // in the milestone, GamePanel drew the rink directly
-// we split it into this class so AirHockeyGame can focus on gameplay
+// we split it into this class so GamePanel can focus on gameplay
 // this draws the ice, goals, center line, scoreboard, and player labels
 public class Rink extends GameObject {
 

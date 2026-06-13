@@ -17,12 +17,12 @@ public class AirHockeyApp {
     }
 
     /**
-     * opens the home screen with menu music
+     * opens the start screen with menu music
      * pre:  none
-     * post: a new HomeScreen is created, the menu music starts playing, and the window is shown
+     * post: a new StartPanel is created, the menu music starts playing, and the window is shown
      */
     public static void showHome() {
-        HomeScreen home = new HomeScreen();
+        StartPanel home = new StartPanel();
         MusicPlayer.startLoop(MusicPlayer.findThemeFile());
         home.setVisible(true);
     }
@@ -30,10 +30,10 @@ public class AirHockeyApp {
     /**
      * creates and starts a new air hockey match
      * pre:  none
-     * post: a new AirHockeyGame window is created, shown, and started
+     * post: a new GamePanel window is created, shown, and started
      */
     public static void launchGame() {
-        AirHockeyGame game = new AirHockeyGame();
+        GamePanel game = new GamePanel();
         game.setVisible(true);
         game.initComponents();
     }

@@ -181,9 +181,9 @@ public class Paddle extends GameObject {
     }
 
     /**
-     * leaves paddle frame behavior to AirHockeyGame
+     * leaves paddle frame behavior to GamePanel
      * pre:  none
-     * post: nothing - paddle movement is controlled through move() in AirHockeyGame
+     * post: nothing - paddle movement is controlled through move() in GamePanel
      */
     public void act() {
     }
