@@ -46,7 +46,6 @@ public class StartPanel extends JFrame {
         byline.setHorizontalAlignment(JLabel.CENTER);
 
         JButton startButton = makeButton("START GAME", () -> {
-            MusicPlayer.lowerVolume();
             dispose();
             AirHockeyApp.launchGame();
         });
