@@ -53,11 +53,7 @@ public class MusicPlayer {
 
     // main match music
     public static File findBattleMusicFile() {
-        File battleMusic = new File("assets/audio/coconut-mall-battle-music.wav");
-        if (battleMusic.exists()) {
-            return battleMusic;
-        }
-        return null;
+        return new File("assets/audio/coconut-mall-battle-music.wav");
     }
 
     private static void setClipVolume(Clip clip, float amount) {

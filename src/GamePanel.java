@@ -1,6 +1,5 @@
 import java.awt.Color;
 import java.awt.Frame;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -245,7 +244,7 @@ public class GamePanel extends Game {
     /**
      * starts the main match music loop once play begins
      * pre:  the opening countdown has finished
-     * post: the match music loops; if the file is missing the menu music keeps playing
+     * post: the match music starts looping
      */
     private void startMatchMusic() {
         if (matchMusicStarted) {
@@ -253,10 +252,7 @@ public class GamePanel extends Game {
         }
         matchMusicStarted = true;
 
-        File match = MusicPlayer.findBattleMusicFile();
-        if (match != null && match.exists()) {
-            MusicPlayer.startLoop(match);
-        }
+        MusicPlayer.startLoop(MusicPlayer.findBattleMusicFile());
     }
 
     /**
