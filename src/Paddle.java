@@ -7,7 +7,8 @@ import framework.GameObject;
 // one paddle for one player - they can only move it around their own half of the rink
 public class Paddle extends GameObject {
 
-    // base sizes for the original 800x600 layout; scaled up to fit the window
+    // base sizes for the original 800x600 layout
+    // later the paddle is scaled up to fit the window
     private static final int BASE_WIDTH  = 16;
     private static final int BASE_HEIGHT = 80;
     private static final int BASE_SPEED  = 5;
@@ -60,20 +61,10 @@ public class Paddle extends GameObject {
         moveCenterTo(centerX, centerY, minX, maxX, minY, maxY);
     }
 
-    /**
-     * gets the paddle center x
-     * pre:  paddle exists
-     * post: returns the x coordinate of the paddle's center
-     */
     private int getCenterX() {
         return getX() + getWidth() / 2;
     }
 
-    /**
-     * gets the paddle center y
-     * pre:  paddle exists
-     * post: returns the y coordinate of the paddle's center
-     */
     private int getCenterY() {
         return getY() + getHeight() / 2;
     }
@@ -110,29 +101,17 @@ public class Paddle extends GameObject {
         repaint();
     }
 
-    /**
-     * gets how fast the paddle is moving sideways this frame
-     * pre:  paddle exists
-     * post: returns the paddle center's horizontal change for the current frame
-     */
     public int getVelocityX() {
         return velocityX;
     }
 
-    /**
-     * gets how fast the paddle is moving up or down this frame
-     * pre:  paddle exists
-     * post: returns the paddle center's vertical change for the current frame
-     */
     public int getVelocityY() {
         return velocityY;
     }
 
     /**
      * makes the paddle taller (the size powerup)
-     * pre:  paddle is on screen
-     * post: paddle gets 1.5x taller but stays centered where it was, so it doesn't
-     *       suddenly jump up or down
+     * post: paddle gets 1.5x taller but stays centered where it was, so it doesn't suddenly jump up or down
      */
     public void grow() {
         int centerY = getY() + getHeight() / 2;
@@ -144,7 +123,7 @@ public class Paddle extends GameObject {
     /**
      * returns the paddle to normal height
      * pre:  paddle has been grown via grow()
-     * post: paddle height returns to baseHeight; vertical center is preserved
+     * post: paddle height returns to baseHeight
      */
     public void revert() {
         int centerY = getY() + getHeight() / 2;
@@ -154,7 +133,7 @@ public class Paddle extends GameObject {
     }
 
     /**
-     * makes the paddle zippier (the speed powerup)
+     * makes the paddle move faster (the speed powerup)
      * pre:  paddle exists
      * post: bumps the paddle's speed to 1.5x normal until revertSpeed() puts it back
      */
@@ -171,28 +150,14 @@ public class Paddle extends GameObject {
         currentSpeed = baseSpeed * 3 / 4;
     }
 
-    /**
-     * returns the paddle speed to normal
-     * pre:  speedUp() or slowDown() was called
-     * post: currentSpeed is restored to the default baseSpeed
-     */
     public void revertSpeed() {
         currentSpeed = baseSpeed;
     }
 
-    /**
-     * leaves paddle frame behavior to GamePanel
-     * pre:  none
-     * post: nothing - paddle movement is controlled through move() in GamePanel
-     */
     public void act() {
     }
 
-    /**
-     * draws the paddle
-     * pre:  g is a valid Graphics object
-     * post: paddle is drawn with a white border and the player's color inside
-     */
+
     public void paint(Graphics g) {
         g.setColor(Color.WHITE);
         g.fillRoundRect(0, 0, paddleWidth, getHeight(), 8, 8);

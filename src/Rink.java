@@ -195,11 +195,6 @@ public class Rink extends GameObject {
         g.drawString(s2, labelRight - fm.stringWidth(s2), scoreY);
     }
 
-    /**
-     * the rink does not need to do anything each frame
-     * pre:  none
-     * post: no state changes
-     */
     public void act() {
     }
 }
